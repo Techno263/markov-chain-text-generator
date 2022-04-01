@@ -5,16 +5,6 @@ import random
 MAX_LENGTH = 30
 
 
-def logistic(x, a, b, c, d):
-    return a / (1.0 + np.exp(-c * (x - d))) + b
-
-
-_logistic_params = np.array([-1.0065147275997992, 0.9931718755205154, -0.9488148531367252, 7.309879429758943])
-def end_prob(length):
-    res = logistic(length, *_logistic_params)
-    return np.clip(res, 0, 1)
-
-
 def get_char_sequences(seq_len, characters):
     if seq_len < 1:
         raise Exception('seq_len must be greater than 0')
@@ -67,8 +57,6 @@ class MarkovChain:
         output = []
         current_state = self.states[self.start]
         for i in range(MAX_LENGTH):
-            if random.random() < end_prob(i) - 0.1:
-                break
             transition = current_state.get_next()
             if transition == self.end:
                 break
@@ -115,12 +103,24 @@ class MarkovChainBuilderState:
 
     def compile(self):
         transitions, counts = map(np.array, zip(*self.transitions.items()))
-        sum = np.sum(counts)
-        if sum == 0:
+        count_sum = np.sum(counts)
+        if count_sum == 0:
             probs = np.full(counts.shape, 1 / counts.size)
         else:
             probs = counts / np.sum(counts)
         return MarkovChainState(self.state, transitions, probs)
+
+    def to_json(self):
+        return {
+            'state': self.state,
+            'transitions': self.transitions
+        }
+
+    @staticmethod
+    def from_json(obj):
+        mcbs = MarkovChainBuilderState(obj['state'])
+        mcbs.transitions = obj['transitions']
+        return mcbs
 
 
 class MarkovChainBuilder:
@@ -175,3 +175,21 @@ class MarkovChainBuilder:
     def compile(self):
         states = {c: s.compile() for c, s in self.states.items()}
         return MarkovChain(states, self.start, self.end, self.seq_len)
+
+    def to_json(self):
+        return {
+            'start': self.start,
+            'end': self.end,
+            'seq_len': self.seq_len,
+            'nested_seq': self.nested_seq,
+            'states': [s.to_json() for s in self.states.values()]
+        }
+
+    @staticmethod
+    def from_json(obj):
+        mcb = MarkovChainBuilder(obj['start'], obj['end'], obj['seq_len'], obj['nested_seq'])
+        mcb.states = {
+            s['state']: MarkovChainBuilderState.from_json(s)
+            for s in obj['states']
+        }
+        return mcb
