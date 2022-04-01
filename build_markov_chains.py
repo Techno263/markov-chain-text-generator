@@ -2,7 +2,8 @@ import json
 
 from markov_chain import MarkovChainBuilder
 
-if __name__ == '__main__':
+
+def main():
     with open('datasets/names.json', 'rt') as fp:
         names = json.load(fp)
     char_set = {c for n in names for c in n}
@@ -16,3 +17,7 @@ if __name__ == '__main__':
 
         with open(f'markov_chains/markov_chain_builder_seq_len_{seq_len}.json', 'wt') as fp:
             json.dump(builder.to_json(), fp, separators=(',', ':'))
+
+
+if __name__ == '__main__':
+    main()

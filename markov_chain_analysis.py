@@ -2,7 +2,8 @@ import json
 
 from markov_chain import MarkovChainBuilder
 
-if __name__ == '__main__':
+
+def main():
     markov_chains = [
         'markov_chains/markov_chain_builder_seq_len_1.json',
         'markov_chains/markov_chain_builder_seq_len_2.json',
@@ -25,3 +26,7 @@ if __name__ == '__main__':
         print(len(intersection) / gen_count)
         print(sorted(gen_names))
     print()
+
+
+if __name__ == '__main__':
+    main()
